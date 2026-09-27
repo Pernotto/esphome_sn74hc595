@@ -71,7 +71,8 @@ void SN74HC595IGPIOComponent::write_gpio() {
   auto value = this->value_bytes_.rbegin();
   auto inverted = this->inverted_bytes_.rbegin();
   #ifndef ALL_WRITES
-  bool prev_to_write;
+  // sentinel value outside {0, 1} guarantees the very first comparison below is a mismatch
+  int8_t prev_to_write = -1;
   #endif
   while (value != this->value_bytes_.rend() && inverted != this->inverted_bytes_.rend()) {
     for (int8_t i = 7; i >= 0; i--) {
@@ -81,12 +82,7 @@ void SN74HC595IGPIOComponent::write_gpio() {
         this->data_pin_->digital_write(value_bit != value_inverted);
       #else
         bool to_write = value_bit != value_inverted;
-        if (i < 7) {
-          if (prev_to_write != to_write){
-            this->data_pin_->digital_write(to_write);
-            prev_to_write = to_write;
-          }
-        } else {
+        if (prev_to_write != to_write) {
           this->data_pin_->digital_write(to_write);
           prev_to_write = to_write;
         }
